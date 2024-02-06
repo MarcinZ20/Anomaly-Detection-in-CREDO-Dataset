@@ -4,7 +4,7 @@ import skimage
 from sklearn.linear_model import LinearRegression
 
 
-def otsu(image: np.ndarray) -> np.ndarray:  # algorytm otsu automatycznie znajduje progowanie
+def otsu(image: np.ndarray) -> np.ndarray:
     """OTSU algorithm automatically finds the thresholding
 
     Args:
@@ -37,13 +37,13 @@ def masking(img: np.ndarray, mask: np.ndarray):
     return cv2.bitwise_and(img, img, mask=mask)
 
 
-def preprop_hachaj(img: np.ndarray):  # preprocessing zaproponowany w pracy hachaja
+def preprop_hachaj(img: np.ndarray):
     mask = otsu(img)
     mask = dil_open(mask)
     return masking(img, mask)
 
 
-def mass_mean(image: np.ndarray) -> np.ndarray:  # przesuniecie obrazu żeby jego srodek kolorow był w centrum
+def mass_mean(image: np.ndarray) -> np.ndarray:
     x_mean = 0
     y_mean = 0
     val = sum([sum(i) for i in image])
@@ -65,7 +65,7 @@ def mass_mean(image: np.ndarray) -> np.ndarray:  # przesuniecie obrazu żeby jeg
     return cv2.warpAffine(image, translation_matrix, (60, 60))
 
 
-def main_line(img: np.ndarray) -> np.float32:  # znalezienie linii wzgledem której dokona się rotacji
+def main_line(img: np.ndarray) -> np.float32:
     mask = otsu(img)
 
     data = np.nonzero(mask)
@@ -76,7 +76,7 @@ def main_line(img: np.ndarray) -> np.float32:  # znalezienie linii wzgledem któ
     return reg.coef_
 
 
-def rotate(image: np.ndarray) -> np.ndarray:  # rotacja obrazu
+def rotate(image: np.ndarray) -> np.ndarray:
     a = main_line(image)
     (h, w) = image.shape[:2]
     cX, cY = (w // 2, h // 2)
@@ -86,7 +86,14 @@ def rotate(image: np.ndarray) -> np.ndarray:  # rotacja obrazu
     return cv2.warpAffine(image, M, (w, h))
 
 
-def preprop(image: np.ndarray) -> np.ndarray:  # cały preprocessing zaproponowany przeze mnie
+def preprop(image: np.ndarray) -> np.ndarray:
+    """
+    Whole preprocessing presented by us
+
+    Args: image: np.ndarray
+
+    Returns: np.ndarray: Processed image
+    """
     image = preprop_hachaj(image)
     image = mass_mean(image)
 

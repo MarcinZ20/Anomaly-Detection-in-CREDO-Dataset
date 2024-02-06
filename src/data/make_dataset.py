@@ -23,11 +23,10 @@ def main(input_filepath, output_filepath):
     data_folders = [f for f in os.listdir(input_filepath) if Path(fr'{input_filepath}/{f}').is_dir()]
 
     for folder in data_folders:
-        if folder == '42':
-            for f in tqdm(os.listdir(fr'{input_filepath}/{folder}')):
-                img = cv2.imread(fr'{input_filepath}/{folder}/{f}', cv2.IMREAD_GRAYSCALE)
-                processed_image = preprop(img)
-                cv2.imwrite(fr'{output_filepath}/proc_{f}', processed_image)
+        for f in tqdm(os.listdir(fr'{input_filepath}/{folder}')):
+            img = cv2.imread(fr'{input_filepath}/{folder}/{f}', cv2.IMREAD_GRAYSCALE)
+            processed_image = preprop(img)
+            cv2.imwrite(fr'{output_filepath}/proc_{f}', processed_image)
 
 
 if __name__ == '__main__':
