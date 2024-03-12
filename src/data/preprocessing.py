@@ -2,7 +2,12 @@ import numpy as np
 import cv2
 import skimage
 from sklearn.linear_model import LinearRegression
+from skimage.segmentation import flood
+from skimage.morphology import opening
 
+def norm(image):
+    image = (image - image.min())/(image.max()- image.min())
+    return image
 
 def otsu(image: np.ndarray) -> np.ndarray:
     """OTSU algorithm automatically finds the thresholding
@@ -17,6 +22,33 @@ def otsu(image: np.ndarray) -> np.ndarray:
 
     return cv2.threshold(image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
+def threshold_2(image: np.ndarray) -> np.ndarray:
+    
+    image = image.astype(np.uint8)
+    return cv2.threshold(image, 75, 255, cv2.THRESH_BINARY)[1]
+
+def remove_dust(image: np.ndarray) -> np.ndarray:
+    tup = ()
+    img = image
+    if image[29, 29] > 250:
+        tup = (29, 29)
+    elif image[29, 30]>250:
+        tup = (29, 30)
+    elif image[30, 29]>250:
+        tup = (30, 29)
+    elif image[30, 30]>250:
+        tup = (30, 30)
+    mask = flood(image, tup, tolerance = 240)
+    
+    maska = np.invert(mask)
+    maska = maska*1
+    maska = maska.astype('uint8')
+    temp = masking(image, maska)
+    temp = opening(temp)
+    image = np.logical_or(temp, masking(image, mask.astype('uint8')))
+    image = masking(img, image.astype('uint8'))
+    return image
+
 
 def dil_open(image_bin: np.ndarray) -> np.ndarray:
     """Dylatacja i opening automatycznie wygładza obszar znaleziony przez OTSU
@@ -27,8 +59,8 @@ def dil_open(image_bin: np.ndarray) -> np.ndarray:
     Returns:
         np.ndarray: output image
     """
-    image_bin = skimage.morphology.dilation(image_bin, np.ones((5, 5)))
-    image_bin = skimage.morphology.opening(image_bin, np.ones((5, 5)))
+    image_bin = skimage.morphology.dilation(image_bin, np.ones((2, 2)))  #wcześniej było (5, 5)
+    image_bin = skimage.morphology.opening(image_bin, np.ones((2, 2)))
 
     return image_bin
 
@@ -86,9 +118,9 @@ def rotate(image: np.ndarray) -> np.ndarray:
     return cv2.warpAffine(image, M, (w, h))
 
 
-def preprop(image: np.ndarray) -> np.ndarray:
+def preprop_2(image: np.ndarray) -> np.ndarray:
     """
-    Whole preprocessing presented by us
+    First preprocessing presented by us
 
     Args: image: np.ndarray
 
@@ -97,4 +129,19 @@ def preprop(image: np.ndarray) -> np.ndarray:
     image = preprop_hachaj(image)
     image = mass_mean(image)
 
+    return rotate(image)
+
+def preprop(image: np.ndarray) -> np.ndarray:
+    """
+    Current preprocessing presented by us
+
+    Args: image: np.ndarray
+
+    Returns: np.ndarray: Processed image
+    """
+    image = norm(image) #Very important!!!
+    image = image * 255
+    image = masking(image, threshold_2(image))
+    image = remove_dust(image)
+    image = mass_mean(image)
     return rotate(image)
