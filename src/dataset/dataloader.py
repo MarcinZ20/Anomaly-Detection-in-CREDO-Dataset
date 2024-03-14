@@ -28,16 +28,44 @@ class CREDO_Dataset(torch.utils.data.Dataset):
         img_path = os.path.join(self.img_dir, self.files[idx])
         image = io.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
-
+        
         if self.transform:
-            image = norm(image) #Very important!!!
-            image = image * 255
+            #image = norm(image) #Very important!!!
+            #image = image * 255
     
-            image = masking(image, threshold_2(image))
+            #image = masking(image, threshold_2(image))
             #image = masking(image, remove_dust)
             #img = mass_mean(img)
             #image = rotate(img)
+            image = preprop(image)
             
+        image = image.astype(np.float32)
+        image = norm(image)
+        
+        return image, self.files[idx]
+    
+class CREDO_Small_Dataset(torch.utils.data.Dataset):
+    def __init__(self, img_dir, transform=None, ):
+
+        self.img_dir = img_dir
+        self.transform = transform
+        self.files = [file for file in os.listdir(img_dir)]
+        
+    def __len__(self):
+        return len(self.files)
+
+    def __getitem__(self, idx):
+        img_path = os.path.join(self.img_dir, self.files[idx])
+        image = io.imread(img_path)
+        image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
+
+        if self.transform:
+            #image = norm(image) #Very important!!!
+            #image = image * 255
+            #image = masking(image, threshold_2(image))
+            #
+            image = preprop(image)
+        
         image = image.astype(np.float32)
         image = norm(image)
         

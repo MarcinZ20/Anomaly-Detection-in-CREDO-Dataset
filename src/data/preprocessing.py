@@ -28,7 +28,7 @@ def threshold_2(image: np.ndarray) -> np.ndarray:
     return cv2.threshold(image, 75, 255, cv2.THRESH_BINARY)[1]
 
 def remove_dust(image: np.ndarray) -> np.ndarray:
-    tup = ()
+    """ tup = (29, 29)
     img = image
     if image[29, 29] > 250:
         tup = (29, 29)
@@ -37,16 +37,26 @@ def remove_dust(image: np.ndarray) -> np.ndarray:
     elif image[30, 29]>250:
         tup = (30, 29)
     elif image[30, 30]>250:
-        tup = (30, 30)
-    mask = flood(image, tup, tolerance = 240)
+        tup = (30, 30) """
     
-    maska = np.invert(mask)
-    maska = maska*1
-    maska = maska.astype('uint8')
-    temp = masking(image, maska)
-    temp = opening(temp)
-    image = np.logical_or(temp, masking(image, mask.astype('uint8')))
-    image = masking(img, image.astype('uint8'))
+    img = image
+    center = image[27:33, 27:33]
+    
+    if len(np.where(center>250))>1:
+        #print(np.where(center > 250))
+        y, x = np.where(center > 250)
+        if y.size == 0:
+            return image
+        seed = (27+y[0], 27+x[0])
+        mask = flood(image, seed, tolerance = 240)
+        
+        maska = np.invert(mask)
+        maska = maska*1
+        maska = maska.astype('uint8')
+        temp = masking(image, maska)
+        temp = opening(temp)
+        image = np.logical_or(temp, masking(image, mask.astype('uint8')))
+        image = masking(img, image.astype('uint8'))
     return image
 
 
@@ -80,6 +90,9 @@ def mass_mean(image: np.ndarray) -> np.ndarray:
     y_mean = 0
     val = sum([sum(i) for i in image])
 
+    if val == 0:
+        return image
+
     for i in range(image.shape[0]):
         x_mean += sum(image[i, :]) * i
 
@@ -101,8 +114,11 @@ def main_line(img: np.ndarray) -> np.float32:
     mask = otsu(img)
 
     data = np.nonzero(mask)
-
     reg = LinearRegression()
+
+    if len(data[0]) == 0:
+        return 0
+
     reg.fit(data[0].reshape(-1, 1), data[1].reshape(-1, 1))
 
     return reg.coef_
