@@ -11,10 +11,11 @@ def norm(image):
 
 
 class CREDO_Dataset(torch.utils.data.Dataset):
-    def __init__(self, img_dir, transform=None, ):
-
+    def __init__(self, img_dir, transform=None,align =False,conv = False):
+        self.conv = conv
         self.img_dir = img_dir
         self.transform = transform
+        self.align = align
         self.dics = os.listdir(self.img_dir)
         self.dics.pop(0)
         self.files = []
@@ -29,24 +30,29 @@ class CREDO_Dataset(torch.utils.data.Dataset):
         image = io.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         
-        if self.transform:
-            #image = norm(image) #Very important!!!
-            #image = image * 255
-    
-            #image = masking(image, threshold_2(image))
-            #image = masking(image, remove_dust)
-            #img = mass_mean(img)
-            #image = rotate(img)
-            image = preprop(image)
+        if self.align:
             
+            image = align_image_2(image)
+
+        elif self.transform:
+
+            image = preprop(image)
+        
+        if self.conv:
+
+            temp = np.zeros((64, 64))
+            temp[2:62, 2:62] = image
+            image = temp
+  
         image = image.astype(np.float32)
         image = norm(image)
         
         return image, self.files[idx]
     
 class CREDO_Small_Dataset(torch.utils.data.Dataset):
-    def __init__(self, img_dir, transform=None, ):
+    def __init__(self, img_dir, transform=None, conv = False):
 
+        self.conv = conv
         self.img_dir = img_dir
         self.transform = transform
         self.files = [file for file in os.listdir(img_dir)]
@@ -65,6 +71,12 @@ class CREDO_Small_Dataset(torch.utils.data.Dataset):
             #image = masking(image, threshold_2(image))
             #
             image = preprop(image)
+        
+        if self.conv:
+
+            temp = np.zeros((64, 64))
+            temp[2:62, 2:62] = image
+            image = temp
         
         image = image.astype(np.float32)
         image = norm(image)
