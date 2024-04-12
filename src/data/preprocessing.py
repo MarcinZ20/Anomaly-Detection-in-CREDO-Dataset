@@ -165,6 +165,13 @@ def preprop(image: np.ndarray) -> np.ndarray:
     image = mass_mean(image)
     return rotate(image)
 
+def simple_preprop(image: np.ndarray) -> np.ndarray:
+
+    image = norm(image) #Very important!!!
+    image = mass_mean(image)
+    return rotate(image)
+
+
 def align_image_2(img, borderMode = cv2.BORDER_CONSTANT):
     
     gray = np.copy(img)
