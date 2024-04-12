@@ -7,6 +7,7 @@ from skimage.morphology import opening
 from sklearn.decomposition import PCA
 import math
 from math import atan2
+from functools import cache
 
 def norm(image):
     image = (image - image.min())/(image.max()- image.min())
@@ -165,6 +166,9 @@ def preprop(image: np.ndarray) -> np.ndarray:
     image = mass_mean(image)
     return rotate(image)
 
+
+
+@cache
 def align_image_2(img, borderMode = cv2.BORDER_CONSTANT):
     
     gray = np.copy(img)
