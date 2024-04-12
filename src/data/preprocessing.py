@@ -4,6 +4,9 @@ import skimage
 from sklearn.linear_model import LinearRegression
 from skimage.segmentation import flood
 from skimage.morphology import opening
+from sklearn.decomposition import PCA
+import math
+from math import atan2
 
 def norm(image):
     image = (image - image.min())/(image.max()- image.min())
@@ -161,3 +164,38 @@ def preprop(image: np.ndarray) -> np.ndarray:
     image = remove_dust(image)
     image = mass_mean(image)
     return rotate(image)
+
+def align_image_2(img, borderMode = cv2.BORDER_CONSTANT):
+    
+    gray = np.copy(img)
+    my_list = []
+    for x in range(gray.shape[0]):
+        for y in range(gray.shape[1]):
+            z = 0
+            while z < gray[x,y]:
+                my_list.append([y, x])
+                z = z + 1
+
+    X = np.array(my_list)
+    pca = PCA(n_components=2)
+    pca.fit(X)
+    mean = pca.mean_
+    eigenvectors = pca.components_
+
+    cntr = (int(mean[0]), int(mean[1]))
+    angle = atan2(eigenvectors[0, 1], eigenvectors[0, 0])  # orientation in radians
+    angle = 180 * angle / math.pi
+
+    (cX, cY) = cntr
+    M = cv2.getRotationMatrix2D((cX, cY), angle, 1.0)
+    (h, w) = gray.shape[:2]
+
+    rotated = cv2.warpAffine(gray, M, (w, h), borderMode = borderMode)
+
+    xx = w / 2 - cX
+    yy = h / 2 - cY
+    M = np.float32([[1, 0, xx], [0, 1, yy]])
+
+    shifted = cv2.warpAffine(rotated, M, (rotated.shape[1], rotated.shape[0]), borderMode = borderMode)
+
+    return shifted
