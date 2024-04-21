@@ -7,7 +7,6 @@ from skimage.morphology import opening
 from sklearn.decomposition import PCA
 import math
 from math import atan2
-from functools import cache
 
 def norm(image):
     image = (image - image.min())/(image.max()- image.min())
@@ -29,7 +28,12 @@ def otsu(image: np.ndarray) -> np.ndarray:
 def threshold_2(image: np.ndarray) -> np.ndarray:
     
     image = image.astype(np.uint8)
-    return cv2.threshold(image, 75, 255, cv2.THRESH_BINARY)[1]
+    return cv2.threshold(image, 50, 255, cv2.THRESH_BINARY)[1]
+
+def threshold_3(image: np.ndarray) -> np.ndarray:
+    
+    image = image.astype(np.uint8)
+    return cv2.threshold(image, 10, 255, cv2.THRESH_BINARY)[1]
 
 def remove_dust(image: np.ndarray) -> np.ndarray:
     """ tup = (29, 29)
@@ -89,7 +93,7 @@ def preprop_hachaj(img: np.ndarray):
     return masking(img, mask)
 
 
-def mass_mean(image: np.ndarray) -> np.ndarray:
+def mass_mean(image: np.ndarray, borderMode=cv2.BORDER_CONSTANT) -> np.ndarray:
     x_mean = 0
     y_mean = 0
     val = sum([sum(i) for i in image])
@@ -111,7 +115,7 @@ def mass_mean(image: np.ndarray) -> np.ndarray:
         [[1, 0, 30 - y_mean], [0, 1, 30 - x_mean]], dtype=np.float32
     )
 
-    return cv2.warpAffine(image, translation_matrix, (60, 60))
+    return cv2.warpAffine(image, translation_matrix, (60, 60), borderMode = borderMode)
 
 
 def main_line(img: np.ndarray) -> np.float32:
@@ -127,16 +131,42 @@ def main_line(img: np.ndarray) -> np.float32:
 
     return reg.coef_
 
+def main_line_weights(img: np.ndarray) -> np.float32:
 
-def rotate(image: np.ndarray) -> np.ndarray:
-    a = main_line(image)
+    img_copy = np.copy(img).flatten()
+    data = np.nonzero(img)
+    weigths = img_copy[img_copy!=0]
+
+    reg = LinearRegression()
+
+    if len(data[0]) == 0:
+        return 0
+
+    reg.fit(data[0].reshape(-1, 1), data[1].reshape(-1, 1), sample_weight=weigths)
+
+    return reg.coef_
+
+
+
+def rotate(image: np.ndarray, weigthed = False, borderMode=cv2.BORDER_CONSTANT) -> np.ndarray: #cv2.BORDER_REFLECT101 #cv2.BORDER_REPLICATE #cv2.BORDER_CONSTANT
+    if weigthed:
+        a = main_line_weights(image)
+    else:
+        a = main_line(image)
     (h, w) = image.shape[:2]
     cX, cY = (w // 2, h // 2)
     stopnie = int(np.arctan(-a) * 180 / np.pi)
     M = cv2.getRotationMatrix2D((cX, cY), stopnie, 1.0)
 
-    return cv2.warpAffine(image, M, (w, h))
+    return cv2.warpAffine(image, M, (w, h), borderMode = borderMode)
 
+def better_binarize(image):
+
+    image = image.astype(np.uint8)
+    hist_data, bins = np.histogram(image.flatten(), bins = 51)
+    max_index = np.where(hist_data == hist_data.max())[0][-1]
+    thresh = int((255 - bins[max_index+1])/2 + bins[max_index+1])
+    return cv2.threshold(image, thresh, 255, cv2.THRESH_BINARY)[1]
 
 def preprop_2(image: np.ndarray) -> np.ndarray:
     """
@@ -166,9 +196,28 @@ def preprop(image: np.ndarray) -> np.ndarray:
     image = mass_mean(image)
     return rotate(image)
 
+def better_preprop(image):
+
+    image = norm(image) #Very important!!!
+    image = image * 255
+    image = masking(image, better_binarize(image))
+    image = remove_dust(image)
+    image = mass_mean(image)
+    return rotate(image)
 
 
-@cache
+def simple_preprop(image: np.ndarray) -> np.ndarray:
+
+    image = norm(image) #Very important!!!
+    image = mass_mean(image)
+    return rotate(image)
+
+def prepro_hachaj_for_real(image):
+
+    #image = norm(image)
+    image = mass_mean(image)
+    return rotate(image, weigthed=True)
+
 def align_image_2(img, borderMode = cv2.BORDER_CONSTANT):
     
     gray = np.copy(img)

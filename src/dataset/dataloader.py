@@ -11,11 +11,12 @@ def norm(image):
 
 
 class CREDO_Dataset(torch.utils.data.Dataset):
-    def __init__(self, img_dir, transform=None,align =False,conv = False):
+    def __init__(self, img_dir, transform=None,hachaj =False,conv = False, transform_better = False):
         self.conv = conv
         self.img_dir = img_dir
+        self.transform_better = transform_better
         self.transform = transform
-        self.align = align
+        self.hachaj = hachaj
         self.dics = os.listdir(self.img_dir)
         self.dics.pop(0)
         self.files = []
@@ -30,13 +31,17 @@ class CREDO_Dataset(torch.utils.data.Dataset):
         image = io.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         
-        if self.align:
+        if self.hachaj:
             
-            image = align_image_2(image)
+            image = prepro_hachaj_for_real(image)
 
         elif self.transform:
 
             image = preprop(image)
+
+        elif self.transform_better:
+
+            image = better_preprop(image)
         
         if self.conv:
 
@@ -48,13 +53,18 @@ class CREDO_Dataset(torch.utils.data.Dataset):
         image = norm(image)
         
         return image, self.files[idx]
+
+
+
     
 class CREDO_Small_Dataset(torch.utils.data.Dataset):
-    def __init__(self, img_dir, transform=None, conv = False):
+    def __init__(self, img_dir, transform=None, hachaj =False,conv = False, transform_better = False):
 
         self.conv = conv
-        self.img_dir = img_dir
+        self.transform_better = transform_better
         self.transform = transform
+        self.hachaj = hachaj
+        self.img_dir = img_dir
         self.files = [file for file in os.listdir(img_dir)]
         
     def __len__(self):
@@ -65,13 +75,15 @@ class CREDO_Small_Dataset(torch.utils.data.Dataset):
         image = io.imread(img_path)
         image = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
 
-        if self.transform:
-            #image = norm(image) #Very important!!!
-            #image = image * 255
-            #image = masking(image, threshold_2(image))
-            #
+        if self.hachaj:    
+            image = prepro_hachaj_for_real(image)
+
+        elif self.transform:
             image = preprop(image)
-        
+
+        elif self.transform_better:
+            image = better_preprop(image)
+
         if self.conv:
 
             temp = np.zeros((64, 64))
@@ -80,7 +92,11 @@ class CREDO_Small_Dataset(torch.utils.data.Dataset):
         
         image = image.astype(np.float32)
         image = norm(image)
-        
+        image = image * 255
+        image = threshold_3(image)
+        image = image.astype(np.float32)
+        image = image/255
+          
         return image, image
     
 
