@@ -111,8 +111,8 @@ Images from `data/raw` should now be processed and loaded into `data/processed` 
 - [@Jan](https://www.github.com/tycjantyc)
 
 ## References
-PCA implementation algorithm used in the study: [PCA Implementation](https://github.com/Parveshdhull/FaceRecognitionUsing-PCA-2D-PCA-And-2D-Square-PCA)
-
+PCA implementation algorithm used in the study: [PCA Implementation](https://github.com/Parveshdhull/FaceRecognitionUsing-PCA-2D-PCA-And-2D-Square-PCA)  
+Cookiecutter Data Science project template: [Cookiecutter](https://www.cookiecutter.io)
 
 ## License
 
