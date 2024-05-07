@@ -110,6 +110,9 @@ Images from `data/raw` should now be processed and loaded into `data/processed` 
 - [@Marcin](https://www.github.com/MarcinZ20)
 - [@Jan](https://www.github.com/tycjantyc)
 
+## References
+PCA implementation algorithm used in the study: [PCA Implementation](https://github.com/Parveshdhull/FaceRecognitionUsing-PCA-2D-PCA-And-2D-Square-PCA)
+
 
 ## License
 
